@@ -117,10 +117,3 @@ Which will start a server at `http://localhost:8080`
   If you find <strong>EVIBLOCK</strong> helpful, give it a star to show your support and help others discover it!<br>
   Your star motivates us to keep improving and building more secure tools like EviBlock.
 </p>
-
-<p align="center">
-  <a href="https://github.com/vibhasdutta/EVIBLOCK">
-    <img src="https://img.shields.io/github/stars/vibhasdutta/EVIBLOCK?style=social" alt="Star EVIBLOCK on GitHub">
-  </a>
-</p>
-
