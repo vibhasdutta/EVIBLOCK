@@ -1,7 +1,17 @@
-import { useState } from "react";
 import { evi_block_backend } from "declarations/evi_block_backend";
+import { useState } from "react";
+import ModernButton from "./Upload";
+import FileInput from "./FileInput";
+import Input from "./TextInput";
+import "./index.scss";
+import Particles from "./Particles";
+import TrueFocus from "./TrueFocus ";
+import Squares from "./Squares";
+import ToggleButtons from "./ToggleButtons";
+import Header from "./header";
+import "./AboutPage.scss";
+import { FaLinkedin, FaGithub, FaTwitter } from "react-icons/fa";
 
-// Hashing function using Web Crypto API
 async function hashFile(file) {
   const buffer = await file.arrayBuffer();
   const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
@@ -18,24 +28,89 @@ function App() {
   const [verifyFileHash, setVerifyFileHash] = useState("");
   const [uploadResponse, setUploadResponse] = useState("");
   const [verifyResponse, setVerifyResponse] = useState("");
+  const [activeCard, setActiveCard] = useState("upload");
+  const [activePage, setActivePage] = useState("home");
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  const teamMembers = [
+    {
+      name: "Vibhas Dutta",
+      role: "EviBlock Backend/Frontend Developer",
+      description: "Enjoys designing secure, scalable systems on the blockchain.",
+      photo: "team_pic/a coder boy wit defefb84-ae3d-40.png",
+      links: {
+        linkedin: "https://www.linkedin.com/in/vibhas-dutta-366119248/",
+        github: "https://github.com/vibhasdutta",
+      },
+    },
+    {
+      name: "Abhinav Rajpati",
+      role: "EviBlock Backend Engineer",
+      description: "Driven by solving complex problems through smart contracts and AI logic.",
+      photo: "team_pic/1689217388902.jpeg",
+      links: {
+        linkedin: "https://www.linkedin.com/in/abhinav-rajpati-551544250/",
+        github: "https://github.com/Surventurer",
+      },
+    },
+    {
+      name: "Diwakar Pareek",
+      role: "EviBlock Frontend Developer",
+      description: "Passionate about crafting seamless user experiences with attention to detail.",
+      photo: "team_pic/1700014817193.jpeg",
+      links: {
+        linkedin: "https://www.linkedin.com/in/diwakar-pareek-b20a2a28a/",
+        github: "https://github.com/Deepdiwa",
+      },
+    },
+    {
+      name: "Rajeev.",
+      role: "EviBlock Frontend Developer",
+      description: "Loves building clean and interactive user interfaces.",
+      photo: "team_pic/1694630906556.jpeg",
+      links: {
+        linkedin: "https://www.linkedin.com/in/rajeev-error404/",
+        github: "https://github.com/rajeev-cyber",
+      },
+    },
+  ];
 
   async function handleFileUpload(event) {
     const file = event.target.files[0];
     if (file) {
+      setSelectedFile(file);
       const hash = await hashFile(file);
       setFileHash(hash);
     }
   }
 
+  async function handleVerifyFile(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const hash = await hashFile(file);
+      setVerifyFileHash(hash);
+    }
+  }
+
   async function handleUpload(event) {
     event.preventDefault();
-    if (!fileHash) {
+    if (!fileHash || !selectedFile) {
       setUploadResponse("Please select a file first.");
       return;
     }
+
     try {
-      const response = await evi_block_backend.upload_evidence(caseNo, userId, fileHash);
-      setUploadResponse(response);
+      const timestamp = BigInt(Date.now()) * 1_000_000n;
+      const response = await evi_block_backend.upload_evidence(
+        caseNo,
+        userId,
+        fileHash,
+        timestamp
+      );
+      const readableTime = new Date(Number(timestamp / 1_000_000n)).toLocaleString();
+      setUploadResponse(
+        `✅ ${selectedFile.name} uploaded by ${userId} at ${readableTime}`
+      );
     } catch (error) {
       console.error("Upload Error:", error);
       setUploadResponse("Error uploading evidence");
@@ -49,91 +124,106 @@ function App() {
       return;
     }
     try {
-      const response = await evi_block_backend.verify_evidence(verifyCaseNo, verifyFileHash);
-      setVerifyResponse(response);
+      const response = await evi_block_backend.verify_evidence(
+        verifyCaseNo,
+        verifyFileHash
+      );
+      const timestampMatch = response.match(/At: (\d+)/);
+      if (timestampMatch) {
+        const ns = BigInt(timestampMatch[1]);
+        const readableTime = new Date(Number(ns / 1_000_000n)).toLocaleString();
+        const formattedResponse = response.replace(/At: \d+/, `At: ${readableTime}`);
+        setVerifyResponse(formattedResponse);
+      } else {
+        setVerifyResponse(response);
+      }
     } catch (error) {
       console.error("Verification Error:", error);
       setVerifyResponse("Error verifying evidence");
     }
   }
 
-  async function handleVerifyFile(event) {
-    const file = event.target.files[0];
-    if (file) {
-      const hash = await hashFile(file);
-      setVerifyFileHash(hash);
-    }
-  }
-
   return (
-    <main className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-6">
-      <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full">
-        <img src="/logo2.svg" alt="DFINITY logo" className="w-24 mx-auto mb-4" />
-
-        <h2 className="text-xl font-bold text-gray-700 text-center">Upload Evidence</h2>
-        <form onSubmit={handleUpload} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-600">Case No:</label>
-            <input
-              type="text"
-              value={caseNo}
-              onChange={(e) => setCaseNo(e.target.value)}
-              required
-              className="mt-1 p-2 w-full border rounded-md"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-600">User ID:</label>
-            <input
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              required
-              className="mt-1 p-2 w-full border rounded-md"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-600">Upload File:</label>
-            <input type="file" onChange={handleFileUpload} required className="mt-1 w-full" />
-            {fileHash && <p className="text-xs text-gray-500 break-all mt-2">File Hash: {fileHash}</p>}
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
-          >
-            Upload
-          </button>
-        </form>
-        {uploadResponse && <p className="mt-2 text-center text-sm text-gray-700">{uploadResponse}</p>}
+    <main className="app-wrapper">
+      <Header setActivePage={setActivePage} />
+      <div className="backani-container">
+        <Squares speed={1.5} squareSize={100} direction="right" borderColor="#2452ff" hoverFillColor="#222" />
       </div>
+      
+      {activePage === "home" && (
+        <>
 
-      <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full mt-6">
-        <h2 className="text-xl font-bold text-gray-700 text-center">Verify Evidence</h2>
-        <form onSubmit={handleVerify} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-600">Case No:</label>
-            <input
-              type="text"
-              value={verifyCaseNo}
-              onChange={(e) => setVerifyCaseNo(e.target.value)}
-              required
-              className="mt-1 p-2 w-full border rounded-md"
-            />
+          <ToggleButtons activeCard={activeCard} setActiveCard={setActiveCard} />
+
+          <div className="card-row">
+            {activeCard === "upload" && (
+              <div className="card upload-card">
+                <div className="card-bg">
+                  <Particles particleColors={["#2452ff", "#92c5ff"]} particleCount={300} particleSpread={10} speed={0.1} particleBaseSize={290} moveParticlesOnHover={false} alphaParticles={false} disableRotation={false} />
+                </div>
+                <div className="card-content">
+                  <TrueFocus sentence="Upload Evidence" blurAmount={4} borderColor="#2452ff" />
+                  <h2></h2>
+                  <form onSubmit={handleUpload}>
+                    <Input label="Case Number:" value={caseNo} onChange={(e) => setCaseNo(e.target.value)} required />
+                    <Input label="User ID:" value={userId} onChange={(e) => setUserId(e.target.value)} required />
+                    <FileInput label="Upload File" onChange={handleFileUpload} required />
+                    <ModernButton text="Upload Evidence" />
+                  </form>
+                  {uploadResponse && <p className="response-msg">{uploadResponse}</p>}
+                </div>
+              </div>
+            )}
+
+            {activeCard === "verify" && (
+              <div className="card verify-card">
+                <div className="card-bg">
+                  <Particles particleColors={["#2452ff", "#92c5ff"]} particleCount={300} particleSpread={10} speed={0.1} particleBaseSize={290} moveParticlesOnHover={false} alphaParticles={false} disableRotation={false} />
+                </div>
+                <div className="card-content">
+                  <TrueFocus sentence="Verify Evidence" blurAmount={4} borderColor="#2452ff" />
+                  <h2></h2>
+                  <form onSubmit={handleVerify}>
+                    <Input label="Case Number:" value={verifyCaseNo} onChange={(e) => setVerifyCaseNo(e.target.value)} required />
+                    <FileInput label="Upload File for Verification" onChange={handleVerifyFile} required />
+                    <ModernButton text="Verify Evidence" />
+                  </form>
+                  {verifyResponse && <p className="response-msg">{verifyResponse}</p>}
+                </div>
+              </div>
+            )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-600">Upload File for Verification:</label>
-            <input type="file" onChange={handleVerifyFile} required className="mt-1 w-full" />
-            {verifyFileHash && <p className="text-xs text-gray-500 break-all mt-2">Generated Hash: {verifyFileHash}</p>}
+        </>
+      )}
+
+      {activePage === "about" && (
+        <div className="about-page">
+          <h2>About Us</h2>
+          <p>
+            Eviblock is a blockchain-based digital evidence verification platform. Upload and verify the authenticity of your files using decentralized trust.
+          </p>
+          <p>
+            This tool ensures a tamper-proof chain of custody for files related to cybercrime and legal evidence handling. Built with security, simplicity, and transparency in mind.
+          </p>
+          <div className="scroll-down">↓ Scroll Down to Meet the Team ↓</div>
+
+          <div className="team-section">
+            {teamMembers.map((member, index) => (
+              <div className="team-card" key={index}>
+                <img src={member.photo} alt={`${member.name}'s avatar`} className="avatar" />
+                <h3>{member.name}</h3>
+                <p className="role">{member.role}</p>
+                <p className="desc">{member.description}</p>
+                <div className="social-links">
+                  {member.links.linkedin && <a href={member.links.linkedin} target="_blank" rel="noopener noreferrer"><FaLinkedin /></a>}
+                  {member.links.github && <a href={member.links.github} target="_blank" rel="noopener noreferrer"><FaGithub /></a>}
+                  {member.links.twitter && <a href={member.links.twitter} target="_blank" rel="noopener noreferrer"><FaTwitter /></a>}
+                </div>
+              </div>
+            ))}
           </div>
-          <button
-            type="submit"
-            className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition"
-          >
-            Verify
-          </button>
-        </form>
-        {verifyResponse && <p className="mt-2 text-center text-sm text-gray-700">{verifyResponse}</p>}
-      </div>
+        </div>
+      )}
     </main>
   );
 }
