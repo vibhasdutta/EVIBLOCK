@@ -1,5 +1,5 @@
 import { evi_block_backend } from "declarations/evi_block_backend";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import ModernButton from "./Upload";
 import FileInput from "./FileInput";
 import Input from "./TextInput";
@@ -31,6 +31,10 @@ function App() {
   const [activeCard, setActiveCard] = useState("upload");
   const [activePage, setActivePage] = useState("home");
   const [selectedFile, setSelectedFile] = useState(null);
+  
+  // Add refs for the file inputs
+  const uploadFileInputRef = useRef(null);
+  const verifyFileInputRef = useRef(null);
 
   const teamMembers = [
     {
@@ -111,6 +115,17 @@ function App() {
       setUploadResponse(
         `✅ ${selectedFile.name} uploaded by ${userId} at ${readableTime}`
       );
+      
+      // Reset form fields after successful upload
+      setCaseNo("");
+      setUserId("");
+      setFileHash("");
+      setSelectedFile(null);
+      
+      // Reset file input using the custom reset method
+      if (uploadFileInputRef.current) {
+        uploadFileInputRef.current.reset();
+      }
     } catch (error) {
       console.error("Upload Error:", error);
       setUploadResponse("Error uploading evidence");
@@ -134,6 +149,15 @@ function App() {
         const readableTime = new Date(Number(ns / 1_000_000n)).toLocaleString();
         const formattedResponse = response.replace(/At: \d+/, `At: ${readableTime}`);
         setVerifyResponse(formattedResponse);
+        
+        // Reset form fields after successful verification
+        setVerifyCaseNo("");
+        setVerifyFileHash("");
+        
+        // Reset file input using the custom reset method
+        if (verifyFileInputRef.current) {
+          verifyFileInputRef.current.reset();
+        }
       } else {
         setVerifyResponse(response);
       }
@@ -152,7 +176,6 @@ function App() {
       
       {activePage === "home" && (
         <>
-
           <ToggleButtons activeCard={activeCard} setActiveCard={setActiveCard} />
 
           <div className="card-row">
@@ -167,7 +190,12 @@ function App() {
                   <form onSubmit={handleUpload}>
                     <Input label="Case Number:" value={caseNo} onChange={(e) => setCaseNo(e.target.value)} required />
                     <Input label="User ID:" value={userId} onChange={(e) => setUserId(e.target.value)} required />
-                    <FileInput label="Upload File" onChange={handleFileUpload} required />
+                    <FileInput 
+                      label="Upload File" 
+                      onChange={handleFileUpload} 
+                      required 
+                      ref={uploadFileInputRef}
+                    />
                     <ModernButton text="Upload Evidence" />
                   </form>
                   {uploadResponse && <p className="response-msg">{uploadResponse}</p>}
@@ -185,7 +213,12 @@ function App() {
                   <h2></h2>
                   <form onSubmit={handleVerify}>
                     <Input label="Case Number:" value={verifyCaseNo} onChange={(e) => setVerifyCaseNo(e.target.value)} required />
-                    <FileInput label="Upload File for Verification" onChange={handleVerifyFile} required />
+                    <FileInput 
+                      label="Upload File for Verification" 
+                      onChange={handleVerifyFile} 
+                      required 
+                      ref={verifyFileInputRef}
+                    />
                     <ModernButton text="Verify Evidence" />
                   </form>
                   {verifyResponse && <p className="response-msg">{verifyResponse}</p>}

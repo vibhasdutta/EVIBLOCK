@@ -1,15 +1,26 @@
-import React, { useId, useState } from "react";
+import React, { useId, useState, forwardRef, useImperativeHandle } from "react";
 import styled from "styled-components";
 
-const FileInput = ({
+const FileInput = forwardRef(({
   label = "Upload file...",
   onChange,
   required = false,
   accept = "*",
   multiple = false,
-}) => {
+}, ref) => {
   const id = useId();
   const [fileName, setFileName] = useState("");
+  const inputRef = React.useRef(null);
+
+  // Expose reset method through ref
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      setFileName("");
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+    }
+  }));
 
   const handleChange = (e) => {
     const files = e.target.files;
@@ -33,6 +44,7 @@ const FileInput = ({
           required={required}
           accept={accept}
           multiple={multiple}
+          ref={inputRef}
         />
         <label htmlFor={id}>
           <span className="label-text">{label}</span>
@@ -41,7 +53,7 @@ const FileInput = ({
       </div>
     </StyledWrapper>
   );
-};
+});
 
 const StyledWrapper = styled.div`
   .file-box {
